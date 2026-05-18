@@ -3,11 +3,12 @@
 namespace App\Events;
 
 use App\Models\JournalEntry;
+use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class JournalEntryPublished
+class JournalEntryPublished implements ShouldDispatchAfterCommit
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
