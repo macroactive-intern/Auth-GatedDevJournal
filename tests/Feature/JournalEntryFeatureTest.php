@@ -1,0 +1,155 @@
+<?php
+
+use App\Events\JournalEntryPublished;
+use App\Models\JournalEntry;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
+
+uses(RefreshDatabase::class);
+
+it('allows a user to create an entry', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->post(route('journal-entries.store'), [
+        'title' => 'My first dev journal entry',
+        'body' => journalBody(),
+    ]);
+
+    $entry = JournalEntry::first();
+
+    $response->assertRedirect(route('journal-entries.show', $entry));
+
+    $this->assertDatabaseHas('journal_entries', [
+        'user_id' => $user->id,
+        'title' => 'My first dev journal entry',
+    ]);
+});
+
+it('returns 429 for the eleventh entry in a day', function () {
+    $user = User::factory()->create();
+
+    JournalEntry::factory()
+        ->count(10)
+        ->for($user)
+        ->create(['created_at' => now('UTC')]);
+
+    $this->actingAs($user)
+        ->post(route('journal-entries.store'), [
+            'title' => 'One too many',
+            'body' => journalBody(),
+        ])
+        ->assertStatus(429)
+        ->assertHeader('X-RateLimit-Limit', '10')
+        ->assertHeader('X-RateLimit-Reset');
+});
+
+it('allows an owner to edit their own entry', function () {
+    $user = User::factory()->create();
+    $entry = JournalEntry::factory()->for($user)->create();
+
+    $this->actingAs($user)
+        ->get(route('journal-entries.edit', $entry))
+        ->assertOk()
+        ->assertSee($entry->title);
+
+    $this->actingAs($user)
+        ->patch(route('journal-entries.update', $entry), [
+            'title' => 'Updated title',
+            'body' => journalBody(),
+        ])
+        ->assertRedirect(route('journal-entries.show', $entry));
+
+    $this->assertDatabaseHas('journal_entries', [
+        'id' => $entry->id,
+        'title' => 'Updated title',
+    ]);
+});
+
+it('prevents other users from editing an entry', function () {
+    $owner = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $entry = JournalEntry::factory()->for($owner)->create();
+
+    $this->actingAs($otherUser)
+        ->get(route('journal-entries.edit', $entry))
+        ->assertForbidden();
+
+    $this->actingAs($otherUser)
+        ->patch(route('journal-entries.update', $entry), [
+            'title' => 'Not allowed',
+            'body' => journalBody(),
+        ])
+        ->assertForbidden();
+});
+
+it('shows public entries publicly', function () {
+    $entry = JournalEntry::factory()->public()->create([
+        'title' => 'Public dev note',
+    ]);
+
+    $this->get(route('journal-entries.show', $entry))
+        ->assertOk()
+        ->assertSee('Public dev note');
+});
+
+it('hides private entries publicly', function () {
+    $entry = JournalEntry::factory()->create([
+        'title' => 'Private dev note',
+        'is_public' => false,
+    ]);
+
+    $this->get(route('journal-entries.show', $entry))
+        ->assertForbidden();
+});
+
+it('searches a user journal entries', function () {
+    $user = User::factory()->create();
+    JournalEntry::factory()->for($user)->create(['title' => 'Laravel service container']);
+    JournalEntry::factory()->for($user)->create(['title' => 'Unrelated note']);
+
+    $this->actingAs($user)
+        ->get(route('journal-entries.index', ['search' => 'service']))
+        ->assertOk()
+        ->assertSee('Laravel service container')
+        ->assertDontSee('Unrelated note');
+});
+
+it('dispatches an event when publishing an entry', function () {
+    Event::fake([JournalEntryPublished::class]);
+
+    $user = User::factory()->create();
+    $entry = JournalEntry::factory()->for($user)->create(['is_public' => false]);
+
+    $this->actingAs($user)
+        ->post(route('journal-entries.publish', $entry))
+        ->assertRedirect(route('journal-entries.show', $entry));
+
+    Event::assertDispatched(JournalEntryPublished::class, function (JournalEntryPublished $event) use ($entry): bool {
+        return $event->journalEntry->is($entry);
+    });
+});
+
+it('attaches tags correctly', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->post(route('journal-entries.store'), [
+        'title' => 'Tagged entry',
+        'body' => journalBody(),
+        'tags' => ['laravel', 'testing'],
+    ]);
+
+    $entry = JournalEntry::firstOrFail();
+
+    $this->assertDatabaseHas('tags', ['name' => 'laravel']);
+    $this->assertDatabaseHas('tags', ['name' => 'testing']);
+    expect($entry->tags()->where('name', 'laravel')->exists())->toBeTrue();
+    expect($entry->tags()->where('name', 'testing')->exists())->toBeTrue();
+});
+
+function journalBody(): string
+{
+    return collect(range(1, 50))
+        ->map(fn (int $number): string => "word{$number}")
+        ->implode(' ');
+}

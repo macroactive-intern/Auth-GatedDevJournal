@@ -1,27 +1,19 @@
 <?php
 
-namespace Tests\Feature;
-
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 
-class JournalTest extends TestCase
-{
-    use RefreshDatabase;
+uses(RefreshDatabase::class);
 
-    public function test_guests_are_redirected_from_the_journal_page(): void
-    {
-        $this->get('/journal')->assertRedirect('/login');
-    }
+it('redirects guests from the journal page', function () {
+    $this->get('/journal')->assertRedirect('/login');
+});
 
-    public function test_authenticated_users_can_view_the_journal_page(): void
-    {
-        $user = User::factory()->create();
+it('allows authenticated users to view the journal page', function () {
+    $user = User::factory()->create();
 
-        $this->actingAs($user)
-            ->get('/journal')
-            ->assertOk()
-            ->assertSee('Dev Journal');
-    }
-}
+    $this->actingAs($user)
+        ->get('/journal')
+        ->assertOk()
+        ->assertSee('Dev Journal');
+});

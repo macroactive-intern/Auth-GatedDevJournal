@@ -15,6 +15,23 @@
                     <p class="mt-2 text-sm text-gray-600">
                         {{ __('This authenticated journal area is only available after login.') }}
                     </p>
+
+                    @isset($entries)
+                        <div class="mt-6 space-y-4">
+                            @forelse ($entries as $entry)
+                                <article>
+                                    <h3 class="font-semibold">
+                                        <a href="{{ route('journal-entries.show', $entry) }}" class="hover:underline">
+                                            {{ $entry->title }}
+                                        </a>
+                                    </h3>
+                                    <p class="mt-1 text-sm text-gray-600">{{ str($entry->body)->words(20) }}</p>
+                                </article>
+                            @empty
+                                <p class="text-sm text-gray-600">{{ __('No journal entries found.') }}</p>
+                            @endforelse
+                        </div>
+                    @endisset
                 </div>
             </div>
         </div>

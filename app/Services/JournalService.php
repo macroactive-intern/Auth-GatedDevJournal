@@ -16,10 +16,16 @@ class JournalService
 {
     private const DAILY_ENTRY_LIMIT = 10;
 
-    public function listForUser(User $user): Collection
+    public function listForUser(User $user, ?string $search = null): Collection
     {
         return $user->journalEntries()
             ->with('tags')
+            ->when($search, function ($query, string $search): void {
+                $query->where(function ($query) use ($search): void {
+                    $query->where('title', 'like', "%{$search}%")
+                        ->orWhere('body', 'like', "%{$search}%");
+                });
+            })
             ->latest()
             ->get();
     }
