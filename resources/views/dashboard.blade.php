@@ -12,7 +12,7 @@
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto space-y-6 sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900 sm:flex sm:items-center sm:justify-between">
                     <div>
@@ -27,6 +27,65 @@
                     </a>
                 </div>
             </div>
+
+            <section class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 text-gray-900">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-medium">{{ __('Saved entries') }}</h3>
+
+                        <a href="{{ route('journal-entries.index') }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
+                            {{ __('View all') }}
+                        </a>
+                    </div>
+
+                    <div class="mt-6 space-y-5">
+                        @forelse ($entries as $entry)
+                            <article class="border-b border-gray-100 pb-5 last:border-b-0 last:pb-0">
+                                <div class="flex flex-wrap items-start justify-between gap-3">
+                                    <div>
+                                        <h4 class="font-semibold text-gray-900">
+                                            <a href="{{ route('journal-entries.show', $entry) }}" class="hover:underline">
+                                                {{ $entry->title }}
+                                            </a>
+                                        </h4>
+
+                                        <p class="mt-1 text-xs text-gray-500">
+                                            {{ $entry->created_at->format('M j, Y g:i A') }}
+                                            <span class="mx-1">·</span>
+                                            {{ $entry->is_public ? __('Public') : __('Private') }}
+                                        </p>
+                                    </div>
+
+                                    <a href="{{ route('journal-entries.edit', $entry) }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
+                                        {{ __('Edit') }}
+                                    </a>
+                                </div>
+
+                                <p class="mt-3 text-sm leading-6 text-gray-600">
+                                    {{ str($entry->body)->words(35) }}
+                                </p>
+
+                                @if ($entry->tags->isNotEmpty())
+                                    <div class="mt-3 flex flex-wrap gap-2">
+                                        @foreach ($entry->tags as $tag)
+                                            <a href="{{ route('tags.show', $tag) }}" class="text-xs font-medium text-indigo-600 hover:text-indigo-800">
+                                                #{{ $tag->name }}
+                                            </a>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </article>
+                        @empty
+                            <div class="rounded-md border border-dashed border-gray-300 p-6 text-center">
+                                <p class="text-sm text-gray-600">{{ __('No saved entries yet.') }}</p>
+                                <a href="{{ route('journal-entries.create') }}" class="mt-3 inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                                    {{ __('Write your first entry') }}
+                                </a>
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+            </section>
         </div>
     </div>
 </x-app-layout>

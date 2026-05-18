@@ -3,14 +3,17 @@
 use App\Http\Controllers\JournalEntryController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TagController;
+use App\Services\JournalService;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
+Route::get('/dashboard', function (JournalService $journalService) {
+    return view('dashboard', [
+        'entries' => $journalService->listForUser(request()->user()),
+    ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::get('/journal-entries/{journal_entry}', [JournalEntryController::class, 'show'])
