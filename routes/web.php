@@ -12,12 +12,14 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+Route::resource('journal-entries', JournalEntryController::class)->only('show');
+
 Route::middleware('auth')->group(function () {
     Route::get('/journal', function () {
         return view('journal.index');
     })->name('journal.index');
 
-    Route::resource('journal-entries', JournalEntryController::class);
+    Route::resource('journal-entries', JournalEntryController::class)->except('show');
     Route::post('/journal-entries/{journal_entry}/publish', [JournalEntryController::class, 'publish'])
         ->name('journal-entries.publish');
 

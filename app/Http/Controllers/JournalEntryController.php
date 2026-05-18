@@ -68,7 +68,7 @@ class JournalEntryController extends Controller
      */
     public function edit(JournalEntry $journalEntry): View
     {
-        $this->authorize('update', $journalEntry);
+        $this->authorize('edit', $journalEntry);
 
         return view('journal.edit', [
             'entry' => $journalEntry->load('tags'),

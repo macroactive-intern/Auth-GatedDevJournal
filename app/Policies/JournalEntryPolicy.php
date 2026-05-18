@@ -18,9 +18,9 @@ class JournalEntryPolicy
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, JournalEntry $journalEntry): bool
+    public function view(?User $user, JournalEntry $journalEntry): bool
     {
-        return $journalEntry->is_public || $user->is($journalEntry->user);
+        return $journalEntry->is_public || $user?->is($journalEntry->user);
     }
 
     /**
@@ -35,6 +35,14 @@ class JournalEntryPolicy
      * Determine whether the user can update the model.
      */
     public function update(User $user, JournalEntry $journalEntry): bool
+    {
+        return $user->is($journalEntry->user);
+    }
+
+    /**
+     * Determine whether the user can edit the model.
+     */
+    public function edit(User $user, JournalEntry $journalEntry): bool
     {
         return $user->is($journalEntry->user);
     }
