@@ -5,6 +5,7 @@ use App\Models\JournalEntry;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\URL;
 
 uses(RefreshDatabase::class);
 
@@ -101,6 +102,48 @@ it('hides private entries publicly', function () {
 
     $this->get(route('journal-entries.show', $entry))
         ->assertForbidden();
+});
+
+it('allows private entries to be viewed with a valid signed share URL', function () {
+    $entry = JournalEntry::factory()->create([
+        'title' => 'Signed private note',
+        'is_public' => false,
+    ]);
+
+    $signedUrl = URL::temporarySignedRoute(
+        'journal-entries.shared.show',
+        now()->addDays(7),
+        ['journal_entry' => $entry]
+    );
+
+    $this->get($signedUrl)
+        ->assertOk()
+        ->assertSee('Signed private note');
+});
+
+it('rejects private entry share URLs without a valid signature', function () {
+    $entry = JournalEntry::factory()->create([
+        'title' => 'Unsigned private note',
+        'is_public' => false,
+    ]);
+
+    $this->get(route('journal-entries.shared.show', $entry))
+        ->assertForbidden();
+});
+
+it('allows owners to generate a seven day signed share URL', function () {
+    $user = User::factory()->create();
+    $entry = JournalEntry::factory()->for($user)->create(['is_public' => false]);
+
+    $response = $this->actingAs($user)
+        ->get(route('journal-entries.share', $entry))
+        ->assertOk()
+        ->assertSee('This signed link is valid for 7 days.');
+
+    $content = $response->getContent();
+
+    expect($content)->toContain('signature=')
+        ->and($content)->toContain('expires=');
 });
 
 it('searches a user journal entries', function () {

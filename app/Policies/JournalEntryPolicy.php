@@ -75,4 +75,9 @@ class JournalEntryPolicy
     {
         return $user->is($journalEntry->user);
     }
+
+    public function share(User $user, JournalEntry $journalEntry): bool
+    {
+        return $user->is($journalEntry->user);
+    }
 }

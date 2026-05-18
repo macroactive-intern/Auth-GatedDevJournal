@@ -10,6 +10,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\URL;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class JournalService
@@ -38,6 +39,15 @@ class JournalService
     public function getForEditing(JournalEntry $entry): JournalEntry
     {
         return $entry->load('tags');
+    }
+
+    public function temporaryShareUrl(JournalEntry $entry): string
+    {
+        return URL::temporarySignedRoute(
+            name: 'journal-entries.shared.show',
+            expiration: now()->addDays(7),
+            parameters: ['journal_entry' => $entry]
+        );
     }
 
     public function create(User $user, array $data): JournalEntry

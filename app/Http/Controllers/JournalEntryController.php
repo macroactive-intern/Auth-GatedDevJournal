@@ -51,6 +51,13 @@ class JournalEntryController extends Controller
         ]);
     }
 
+    public function sharedShow(JournalEntry $journalEntry): View
+    {
+        return view('journal.show', [
+            'entry' => $this->journalService->getForDisplay($journalEntry),
+        ]);
+    }
+
     public function edit(JournalEntry $journalEntry): View
     {
         $this->authorize('edit', $journalEntry);
@@ -83,5 +90,15 @@ class JournalEntryController extends Controller
         $this->journalService->publish($journalEntry);
 
         return redirect()->route('journal-entries.show', $journalEntry);
+    }
+
+    public function share(JournalEntry $journalEntry): View
+    {
+        $this->authorize('share', $journalEntry);
+
+        return view('journal.share', [
+            'entry' => $journalEntry,
+            'shareUrl' => $this->journalService->temporaryShareUrl($journalEntry),
+        ]);
     }
 }

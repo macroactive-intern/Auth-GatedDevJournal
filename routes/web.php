@@ -14,6 +14,9 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::resource('journal-entries', JournalEntryController::class)->only('show');
+Route::get('/shared/journal-entries/{journal_entry}', [JournalEntryController::class, 'sharedShow'])
+    ->middleware('signed')
+    ->name('journal-entries.shared.show');
 Route::get('/tags', [TagController::class, 'index'])->name('tags.index');
 Route::get('/tags/{tag}', [TagController::class, 'show'])->name('tags.show');
 
@@ -23,6 +26,8 @@ Route::middleware('auth')->group(function () {
     })->name('journal.index');
 
     Route::resource('journal-entries', JournalEntryController::class)->except('show');
+    Route::get('/journal-entries/{journal_entry}/share', [JournalEntryController::class, 'share'])
+        ->name('journal-entries.share');
     Route::post('/journal-entries/{journal_entry}/publish', [JournalEntryController::class, 'publish'])
         ->name('journal-entries.publish');
 
