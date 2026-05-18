@@ -67,6 +67,27 @@ it('allows an owner to edit their own entry', function () {
     ]);
 });
 
+it('stores the previous body as a revision before updating an entry', function () {
+    $user = User::factory()->create();
+    $entry = JournalEntry::factory()->for($user)->create([
+        'body' => 'Original body content before the edit.',
+    ]);
+
+    $this->actingAs($user)
+        ->patch(route('journal-entries.update', $entry), [
+            'title' => $entry->title,
+            'body' => journalBody(),
+        ])
+        ->assertRedirect(route('journal-entries.show', $entry));
+
+    $this->assertDatabaseHas('journal_entry_revisions', [
+        'journal_entry_id' => $entry->id,
+        'body' => 'Original body content before the edit.',
+    ]);
+
+    expect($entry->fresh()->revisions)->toHaveCount(1);
+});
+
 it('prevents other users from editing an entry', function () {
     $owner = User::factory()->create();
     $otherUser = User::factory()->create();

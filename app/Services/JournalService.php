@@ -78,6 +78,7 @@ class JournalService
         return DB::transaction(function () use ($entry, $data): JournalEntry {
             $tagNames = Arr::pull($data, 'tags', null);
             $wasPublic = $entry->is_public;
+            $previousBody = $entry->body;
 
             if (array_key_exists('is_public', $data)) {
                 $data['is_public'] = (bool) $data['is_public'];
@@ -88,6 +89,12 @@ class JournalService
             }
 
             $entry->update($data);
+
+            if (array_key_exists('body', $data) && $data['body'] !== $previousBody) {
+                $entry->revisions()->create([
+                    'body' => $previousBody,
+                ]);
+            }
 
             if (is_array($tagNames)) {
                 $this->syncTags($entry, $tagNames);
