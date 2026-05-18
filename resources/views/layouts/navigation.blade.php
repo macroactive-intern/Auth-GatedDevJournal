@@ -18,6 +18,9 @@
                     <x-nav-link :href="route('journal.index')" :active="request()->routeIs('journal.*')">
                         {{ __('Journal') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('journal-entries.create')" :active="request()->routeIs('journal-entries.create')">
+                        {{ __('New Entry') }}
+                    </x-nav-link>
                 </div>
             </div>
 
@@ -75,6 +78,9 @@
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('journal.index')" :active="request()->routeIs('journal.*')">
                 {{ __('Journal') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('journal-entries.create')" :active="request()->routeIs('journal-entries.create')">
+                {{ __('New Entry') }}
             </x-responsive-nav-link>
         </div>
 

@@ -13,7 +13,9 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::resource('journal-entries', JournalEntryController::class)->only('show');
+Route::get('/journal-entries/{journal_entry}', [JournalEntryController::class, 'show'])
+    ->whereNumber('journal_entry')
+    ->name('journal-entries.show');
 Route::get('/shared/journal-entries/{journal_entry}', [JournalEntryController::class, 'sharedShow'])
     ->middleware('signed')
     ->name('journal-entries.shared.show');
