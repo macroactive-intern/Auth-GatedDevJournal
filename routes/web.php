@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\JournalEntryController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TagController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -13,6 +14,8 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::resource('journal-entries', JournalEntryController::class)->only('show');
+Route::get('/tags', [TagController::class, 'index'])->name('tags.index');
+Route::get('/tags/{tag}', [TagController::class, 'show'])->name('tags.show');
 
 Route::middleware('auth')->group(function () {
     Route::get('/journal', function () {
