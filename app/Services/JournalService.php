@@ -24,6 +24,16 @@ class JournalService
             ->get();
     }
 
+    public function getForDisplay(JournalEntry $entry): JournalEntry
+    {
+        return $entry->load('tags', 'user');
+    }
+
+    public function getForEditing(JournalEntry $entry): JournalEntry
+    {
+        return $entry->load('tags');
+    }
+
     public function create(User $user, array $data): JournalEntry
     {
         $this->enforceDailyEntryLimit($user);

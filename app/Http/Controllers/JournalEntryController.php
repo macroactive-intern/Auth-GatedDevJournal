@@ -16,9 +16,6 @@ class JournalEntryController extends Controller
     {
     }
 
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request): View
     {
         $this->authorize('viewAny', JournalEntry::class);
@@ -28,9 +25,6 @@ class JournalEntryController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create(): View
     {
         $this->authorize('create', JournalEntry::class);
@@ -38,9 +32,6 @@ class JournalEntryController extends Controller
         return view('journal.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(StoreJournalEntryRequest $request): RedirectResponse
     {
         $entry = $this->journalService->create(
@@ -51,33 +42,24 @@ class JournalEntryController extends Controller
         return redirect()->route('journal-entries.show', $entry);
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(JournalEntry $journalEntry): View
     {
         $this->authorize('view', $journalEntry);
 
         return view('journal.show', [
-            'entry' => $journalEntry->load('tags', 'user'),
+            'entry' => $this->journalService->getForDisplay($journalEntry),
         ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(JournalEntry $journalEntry): View
     {
         $this->authorize('edit', $journalEntry);
 
         return view('journal.edit', [
-            'entry' => $journalEntry->load('tags'),
+            'entry' => $this->journalService->getForEditing($journalEntry),
         ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(UpdateJournalEntryRequest $request, JournalEntry $journalEntry): RedirectResponse
     {
         $this->journalService->update($journalEntry, $request->validated());
@@ -85,9 +67,6 @@ class JournalEntryController extends Controller
         return redirect()->route('journal-entries.show', $journalEntry);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(JournalEntry $journalEntry): RedirectResponse
     {
         $this->authorize('delete', $journalEntry);
