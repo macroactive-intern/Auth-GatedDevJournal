@@ -6,12 +6,16 @@ use App\Events\JournalEntryPublished;
 use App\Models\JournalEntry;
 use App\Models\Tag;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class JournalService
 {
+    private const DAILY_ENTRY_LIMIT = 10;
+
     public function listForUser(User $user): Collection
     {
         return $user->journalEntries()
@@ -22,6 +26,8 @@ class JournalService
 
     public function create(User $user, array $data): JournalEntry
     {
+        $this->enforceDailyEntryLimit($user);
+
         return DB::transaction(function () use ($user, $data): JournalEntry {
             $tagNames = Arr::pull($data, 'tags', []);
             $data['is_public'] = (bool) ($data['is_public'] ?? false);
@@ -89,18 +95,61 @@ class JournalService
 
     public function delete(JournalEntry $entry): void
     {
-        $entry->delete();
+        DB::transaction(function () use ($entry): void {
+            $entry->delete();
+        });
+    }
+
+    public function attachTags(JournalEntry $entry, array $tagNames): JournalEntry
+    {
+        return DB::transaction(function () use ($entry, $tagNames): JournalEntry {
+            $entry->tags()->syncWithoutDetaching($this->tagIdsFor($tagNames));
+
+            return $entry->load('tags');
+        });
     }
 
     private function syncTags(JournalEntry $entry, array $tagNames): void
     {
-        $tagIds = collect($tagNames)
+        $entry->tags()->sync($this->tagIdsFor($tagNames));
+    }
+
+    private function tagIdsFor(array $tagNames): array
+    {
+        return collect($tagNames)
             ->map(fn (string $name): string => trim($name))
             ->filter()
             ->unique()
             ->map(fn (string $name): int => Tag::firstOrCreate(['name' => $name])->id)
             ->all();
+    }
 
-        $entry->tags()->sync($tagIds);
+    private function enforceDailyEntryLimit(User $user): void
+    {
+        $now = CarbonImmutable::now('UTC');
+        $startOfDay = $now->startOfDay();
+        $resetAt = $startOfDay->addDay();
+
+        $entriesCreatedToday = $user->journalEntries()
+            ->where('created_at', '>=', $startOfDay)
+            ->where('created_at', '<', $resetAt)
+            ->count();
+
+        if ($entriesCreatedToday < self::DAILY_ENTRY_LIMIT) {
+            return;
+        }
+
+        throw new HttpException(
+            statusCode: 429,
+            message: sprintf(
+                'Daily journal entry limit exceeded. You can create more entries after %s.',
+                $resetAt->toIso8601String()
+            ),
+            headers: [
+                'Retry-After' => (string) max(1, $now->diffInSeconds($resetAt)),
+                'X-RateLimit-Limit' => (string) self::DAILY_ENTRY_LIMIT,
+                'X-RateLimit-Reset' => $resetAt->toIso8601String(),
+            ],
+        );
     }
 }
