@@ -18,7 +18,7 @@
                     <div>
                         <h3 class="text-lg font-medium">{{ __("You're logged in!") }}</h3>
                         <p class="mt-1 text-sm text-gray-600">
-                            {{ __('Start a new journal entry or continue working through your dev notes.') }}
+                            {{ __('Read public dev notes from the team or add a new journal entry of your own.') }}
                         </p>
                     </div>
 
@@ -31,10 +31,10 @@
             <section class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
                     <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-medium">{{ __('Saved entries') }}</h3>
+                        <h3 class="text-lg font-medium">{{ __('Public feed') }}</h3>
 
-                        <a href="{{ route('journal-entries.index') }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
-                            {{ __('View all') }}
+                        <a href="{{ route('journal.index') }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
+                            {{ __('My journal') }}
                         </a>
                     </div>
 
@@ -50,15 +50,17 @@
                                         </h4>
 
                                         <p class="mt-1 text-xs text-gray-500">
-                                            {{ $entry->created_at->format('M j, Y g:i A') }}
-                                            <span class="mx-1">·</span>
-                                            {{ $entry->is_public ? __('Public') : __('Private') }}
+                                            {{ __('By :author', ['author' => $entry->user->name]) }}
+                                            <span class="mx-1">&middot;</span>
+                                            {{ optional($entry->published_at)->format('M j, Y g:i A') ?? $entry->created_at->format('M j, Y g:i A') }}
                                         </p>
                                     </div>
 
-                                    <a href="{{ route('journal-entries.edit', $entry) }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
-                                        {{ __('Edit') }}
-                                    </a>
+                                    @can('edit', $entry)
+                                        <a href="{{ route('journal-entries.edit', $entry) }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
+                                            {{ __('Edit') }}
+                                        </a>
+                                    @endcan
                                 </div>
 
                                 <p class="mt-3 text-sm leading-6 text-gray-600">
@@ -77,7 +79,7 @@
                             </article>
                         @empty
                             <div class="rounded-md border border-dashed border-gray-300 p-6 text-center">
-                                <p class="text-sm text-gray-600">{{ __('No saved entries yet.') }}</p>
+                                <p class="text-sm text-gray-600">{{ __('No public entries yet.') }}</p>
                                 <a href="{{ route('journal-entries.create') }}" class="mt-3 inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
                                     {{ __('Write your first entry') }}
                                 </a>

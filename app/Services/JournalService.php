@@ -31,6 +31,22 @@ class JournalService
             ->get();
     }
 
+    public function listPublic(?string $search = null): Collection
+    {
+        return JournalEntry::query()
+            ->with('tags', 'user')
+            ->where('is_public', true)
+            ->when($search, function ($query, string $search): void {
+                $query->where(function ($query) use ($search): void {
+                    $query->where('title', 'like', "%{$search}%")
+                        ->orWhere('body', 'like', "%{$search}%");
+                });
+            })
+            ->latest('published_at')
+            ->latest()
+            ->get();
+    }
+
     public function getForDisplay(JournalEntry $entry): JournalEntry
     {
         return $entry->load('tags', 'user');

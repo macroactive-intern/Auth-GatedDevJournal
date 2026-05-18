@@ -43,24 +43,30 @@ it('renders the create page with validation errors', function () {
         ->assertSee('The tags.0 field must be a string.');
 });
 
-it('shows the logged in users saved entries on the dashboard feed', function () {
+it('shows public entries from all users on the dashboard feed', function () {
     $user = User::factory()->create();
     $otherUser = User::factory()->create();
 
-    JournalEntry::factory()->for($user)->create([
-        'title' => 'My saved dashboard note',
-        'body' => 'This is the saved dashboard feed body that should be visible to the owner.',
+    JournalEntry::factory()->public()->for($otherUser)->create([
+        'title' => 'Public note from another user',
+        'body' => 'This public dashboard feed body should be visible to logged in users.',
     ]);
 
     JournalEntry::factory()->for($otherUser)->create([
         'title' => 'Someone else private note',
     ]);
 
+    JournalEntry::factory()->for($user)->create([
+        'title' => 'My private dashboard note',
+    ]);
+
     $this->actingAs($user)
         ->get(route('dashboard'))
         ->assertOk()
-        ->assertSee('Saved entries')
-        ->assertSee('My saved dashboard note')
-        ->assertSee('This is the saved dashboard feed body')
+        ->assertSee('Public feed')
+        ->assertSee('Public note from another user')
+        ->assertSee('This public dashboard feed body')
+        ->assertSee('By '.$otherUser->name)
+        ->assertDontSee('My private dashboard note')
         ->assertDontSee('Someone else private note');
 });

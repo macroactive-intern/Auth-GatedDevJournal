@@ -12,7 +12,7 @@ Route::get('/', function () {
 
 Route::get('/dashboard', function (JournalService $journalService) {
     return view('dashboard', [
-        'entries' => $journalService->listForUser(request()->user()),
+        'entries' => $journalService->listPublic(),
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -26,8 +26,10 @@ Route::get('/tags', [TagController::class, 'index'])->name('tags.index');
 Route::get('/tags/{tag}', [TagController::class, 'show'])->name('tags.show');
 
 Route::middleware('auth')->group(function () {
-    Route::get('/journal', function () {
-        return view('journal.index');
+    Route::get('/journal', function (JournalService $journalService) {
+        return view('journal.index', [
+            'entries' => $journalService->listForUser(request()->user()),
+        ]);
     })->name('journal.index');
 
     Route::resource('journal-entries', JournalEntryController::class)->except('show');
