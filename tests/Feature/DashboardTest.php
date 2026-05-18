@@ -112,6 +112,40 @@ it('stores feedback from another user on a public entry', function () {
     ]);
 });
 
+it('shows existing feedback when opening the feedback page', function () {
+    $owner = User::factory()->create();
+    $commenter = User::factory()->create(['name' => 'Existing Commenter']);
+    $viewer = User::factory()->create();
+    $entry = JournalEntry::factory()->public()->for($owner)->create([
+        'title' => 'Entry with visible feedback',
+    ]);
+
+    JournalEntryFeedback::query()->create([
+        'journal_entry_id' => $entry->id,
+        'user_id' => $commenter->id,
+        'body' => 'This previous feedback should show under the form.',
+    ]);
+
+    $this->actingAs($viewer)
+        ->get(route('journal-entries.feedback.create', $entry))
+        ->assertOk()
+        ->assertSee('Entry with visible feedback')
+        ->assertSee('Existing Commenter')
+        ->assertSee('This previous feedback should show under the form.')
+        ->assertSee('Send feedback');
+});
+
+it('shows an empty feedback message when an entry has no feedback yet', function () {
+    $owner = User::factory()->create();
+    $viewer = User::factory()->create();
+    $entry = JournalEntry::factory()->public()->for($owner)->create();
+
+    $this->actingAs($viewer)
+        ->get(route('journal-entries.feedback.create', $entry))
+        ->assertOk()
+        ->assertSee('No feedback has been added yet.');
+});
+
 it('prevents owners from leaving feedback on their own entries', function () {
     $owner = User::factory()->create();
     $entry = JournalEntry::factory()->public()->for($owner)->create();

@@ -16,7 +16,10 @@ class JournalEntryFeedbackController extends Controller
         abort_if($request->user()->is($journalEntry->user), 403);
 
         return view('journal.feedback.create', [
-            'entry' => $journalEntry->load('user'),
+            'entry' => $journalEntry->load([
+                'user',
+                'feedback' => fn ($query) => $query->with('user')->latest(),
+            ]),
         ]);
     }
 

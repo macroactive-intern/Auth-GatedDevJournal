@@ -38,6 +38,31 @@
                             </x-primary-button>
                         </div>
                     </form>
+
+                    <section class="mt-8 border-t border-gray-100 pt-6">
+                        <h3 class="text-lg font-medium">{{ __('Feedback') }}</h3>
+
+                        <div class="mt-4 space-y-4">
+                            @forelse ($entry->feedback as $feedback)
+                                <article class="rounded-md border border-gray-200 p-4">
+                                    <div class="flex flex-wrap items-center justify-between gap-2">
+                                        <p class="text-sm font-medium text-gray-900">
+                                            {{ $feedback->user->name }}
+                                        </p>
+                                        <p class="text-xs text-gray-500">
+                                            {{ $feedback->created_at->format('M j, Y g:i A') }}
+                                        </p>
+                                    </div>
+
+                                    <p class="mt-3 text-sm leading-6 text-gray-600">
+                                        {{ $feedback->body }}
+                                    </p>
+                                </article>
+                            @empty
+                                <p class="text-sm text-gray-600">{{ __('No feedback has been added yet.') }}</p>
+                            @endforelse
+                        </div>
+                    </section>
                 </div>
             </div>
         </div>
