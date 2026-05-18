@@ -33,6 +33,20 @@ class UpdateJournalEntryRequest extends FormRequest
         ];
     }
 
+    protected function prepareForValidation(): void
+    {
+        if (! $this->has('tags')) {
+            return;
+        }
+
+        $this->merge([
+            'tags' => collect($this->input('tags', []))
+                ->filter(fn (mixed $tag): bool => filled($tag))
+                ->values()
+                ->all(),
+        ]);
+    }
+
     /**
      * Get custom validation messages.
      *

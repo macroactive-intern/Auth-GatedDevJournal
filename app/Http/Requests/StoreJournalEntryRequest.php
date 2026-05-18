@@ -34,6 +34,16 @@ class StoreJournalEntryRequest extends FormRequest
         ];
     }
 
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'tags' => collect($this->input('tags', []))
+                ->filter(fn (mixed $tag): bool => filled($tag))
+                ->values()
+                ->all(),
+        ]);
+    }
+
     /**
      * Get custom validation messages.
      *

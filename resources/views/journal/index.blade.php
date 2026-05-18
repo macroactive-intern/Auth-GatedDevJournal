@@ -1,39 +1,88 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Dev Journal') }}
-        </h2>
+        <div class="flex items-center justify-between">
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                {{ __('My Journal') }}
+            </h2>
+
+            <a href="{{ route('journal-entries.create') }}" class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                {{ __('Add new entry') }}
+            </a>
+        </div>
     </x-slot>
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+            <section class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
-                    <p class="text-lg font-medium">
-                        {{ __('Welcome back, :name.', ['name' => Auth::user()->name]) }}
-                    </p>
-                    <p class="mt-2 text-sm text-gray-600">
-                        {{ __('This authenticated journal area is only available after login.') }}
-                    </p>
+                    <div>
+                        <h3 class="text-lg font-medium">
+                            {{ __('Welcome back, :name.', ['name' => Auth::user()->name]) }}
+                        </h3>
+                        <p class="mt-1 text-sm text-gray-600">
+                            {{ __('This is your personal journal feed. Public and private entries you own both live here.') }}
+                        </p>
+                    </div>
 
-                    @isset($entries)
-                        <div class="mt-6 space-y-4">
-                            @forelse ($entries as $entry)
-                                <article>
-                                    <h3 class="font-semibold">
-                                        <a href="{{ route('journal-entries.show', $entry) }}" class="hover:underline">
-                                            {{ $entry->title }}
+                    <div class="mt-6 space-y-5">
+                        @forelse ($entries as $entry)
+                            <article class="border-b border-gray-100 pb-5 last:border-b-0 last:pb-0">
+                                <div class="flex flex-wrap items-start justify-between gap-3">
+                                    <div>
+                                        <h4 class="font-semibold text-gray-900">
+                                            <a href="{{ route('journal-entries.show', $entry) }}" class="hover:underline">
+                                                {{ $entry->title }}
+                                            </a>
+                                        </h4>
+
+                                        <p class="mt-1 text-xs text-gray-500">
+                                            {{ $entry->created_at->format('M j, Y g:i A') }}
+                                            <span class="mx-1">&middot;</span>
+                                            {{ $entry->is_public ? __('Public') : __('Private') }}
+                                        </p>
+                                    </div>
+
+                                    <div class="flex items-center gap-3">
+                                        <a href="{{ route('journal-entries.edit', $entry) }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
+                                            {{ __('Edit') }}
                                         </a>
-                                    </h3>
-                                    <p class="mt-1 text-sm text-gray-600">{{ str($entry->body)->words(20) }}</p>
-                                </article>
-                            @empty
+
+                                        @unless ($entry->is_public)
+                                            <form method="POST" action="{{ route('journal-entries.publish', $entry) }}">
+                                                @csrf
+                                                <button type="submit" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
+                                                    {{ __('Publish') }}
+                                                </button>
+                                            </form>
+                                        @endunless
+                                    </div>
+                                </div>
+
+                                <p class="mt-3 text-sm leading-6 text-gray-600">
+                                    {{ str($entry->body)->words(35) }}
+                                </p>
+
+                                @if ($entry->tags->isNotEmpty())
+                                    <div class="mt-3 flex flex-wrap gap-2">
+                                        @foreach ($entry->tags as $tag)
+                                            <a href="{{ route('tags.show', $tag) }}" class="text-xs font-medium text-indigo-600 hover:text-indigo-800">
+                                                #{{ $tag->name }}
+                                            </a>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </article>
+                        @empty
+                            <div class="rounded-md border border-dashed border-gray-300 p-6 text-center">
                                 <p class="text-sm text-gray-600">{{ __('No journal entries found.') }}</p>
-                            @endforelse
-                        </div>
-                    @endisset
+                                <a href="{{ route('journal-entries.create') }}" class="mt-3 inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                                    {{ __('Write your first entry') }}
+                                </a>
+                            </div>
+                        @endforelse
+                    </div>
                 </div>
-            </div>
+            </section>
         </div>
     </div>
 </x-app-layout>
