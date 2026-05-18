@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\JournalEntry;
+use App\Models\JournalEntryFeedback;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -67,6 +68,61 @@ it('shows public entries from all users on the dashboard feed', function () {
         ->assertSee('Public note from another user')
         ->assertSee('This public dashboard feed body')
         ->assertSee('By '.$otherUser->name)
+        ->assertSee('Give feedback')
         ->assertDontSee('My private dashboard note')
         ->assertDontSee('Someone else private note');
+});
+
+it('shows feedback counts on public dashboard entries', function () {
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $entry = JournalEntry::factory()->public()->for($otherUser)->create([
+        'title' => 'Public note with feedback',
+    ]);
+
+    JournalEntryFeedback::query()->create([
+        'journal_entry_id' => $entry->id,
+        'user_id' => $user->id,
+        'body' => 'This is useful feedback.',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('Public note with feedback')
+        ->assertSee('Give feedback')
+        ->assertSee('(1)');
+});
+
+it('stores feedback from another user on a public entry', function () {
+    $owner = User::factory()->create();
+    $commenter = User::factory()->create();
+    $entry = JournalEntry::factory()->public()->for($owner)->create();
+
+    $this->actingAs($commenter)
+        ->post(route('journal-entries.feedback.store', $entry), [
+            'body' => 'This log was helpful and gave me a useful direction.',
+        ])
+        ->assertRedirect(route('dashboard'));
+
+    $this->assertDatabaseHas('journal_entry_feedback', [
+        'journal_entry_id' => $entry->id,
+        'user_id' => $commenter->id,
+        'body' => 'This log was helpful and gave me a useful direction.',
+    ]);
+});
+
+it('prevents owners from leaving feedback on their own entries', function () {
+    $owner = User::factory()->create();
+    $entry = JournalEntry::factory()->public()->for($owner)->create();
+
+    $this->actingAs($owner)
+        ->get(route('journal-entries.feedback.create', $entry))
+        ->assertForbidden();
+
+    $this->actingAs($owner)
+        ->post(route('journal-entries.feedback.store', $entry), [
+            'body' => 'Commenting on my own entry is not allowed.',
+        ])
+        ->assertForbidden();
 });

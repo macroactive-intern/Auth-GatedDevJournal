@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\JournalEntryController;
+use App\Http\Controllers\JournalEntryFeedbackController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TagController;
 use App\Services\JournalService;
@@ -37,6 +38,12 @@ Route::middleware('auth')->group(function () {
         ->name('journal-entries.share');
     Route::post('/journal-entries/{journal_entry}/publish', [JournalEntryController::class, 'publish'])
         ->name('journal-entries.publish');
+    Route::get('/journal-entries/{journal_entry}/feedback', [JournalEntryFeedbackController::class, 'create'])
+        ->whereNumber('journal_entry')
+        ->name('journal-entries.feedback.create');
+    Route::post('/journal-entries/{journal_entry}/feedback', [JournalEntryFeedbackController::class, 'store'])
+        ->whereNumber('journal_entry')
+        ->name('journal-entries.feedback.store');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

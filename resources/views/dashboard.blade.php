@@ -60,6 +60,11 @@
                                         <a href="{{ route('journal-entries.edit', $entry) }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
                                             {{ __('Edit') }}
                                         </a>
+                                    @else
+                                        <a href="{{ route('journal-entries.feedback.create', $entry) }}" class="inline-flex items-center rounded-md border border-indigo-600 px-3 py-2 text-sm font-semibold text-indigo-600 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                                            {{ __('Give feedback') }}
+                                            <span class="ml-2 text-xs text-indigo-500">({{ $entry->feedback_count }})</span>
+                                        </a>
                                     @endcan
                                 </div>
 

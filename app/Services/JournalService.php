@@ -35,6 +35,7 @@ class JournalService
     {
         return JournalEntry::query()
             ->with('tags', 'user')
+            ->withCount('feedback')
             ->where('is_public', true)
             ->when($search, function ($query, string $search): void {
                 $query->where(function ($query) use ($search): void {

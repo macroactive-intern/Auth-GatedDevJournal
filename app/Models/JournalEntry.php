@@ -42,4 +42,9 @@ class JournalEntry extends Model
     {
         return $this->hasMany(JournalEntryRevision::class);
     }
+
+    public function feedback(): HasMany
+    {
+        return $this->hasMany(JournalEntryFeedback::class);
+    }
 }
