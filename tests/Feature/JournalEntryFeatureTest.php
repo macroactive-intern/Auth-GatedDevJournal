@@ -17,9 +17,7 @@ it('allows a user to create an entry', function () {
         'body' => journalBody(),
     ]);
 
-    $entry = JournalEntry::first();
-
-    $response->assertRedirect(route('journal-entries.show', $entry));
+    $response->assertRedirect(route('dashboard'));
 
     $this->assertDatabaseHas('journal_entries', [
         'user_id' => $user->id,
@@ -192,6 +190,19 @@ it('dispatches an event when publishing an entry', function () {
     Event::assertDispatched(JournalEntryPublished::class, function (JournalEntryPublished $event) use ($entry): bool {
         return $event->journalEntry->is($entry);
     });
+});
+
+it('does not dispatch a publishing event when the entry is already public', function () {
+    Event::fake([JournalEntryPublished::class]);
+
+    $user = User::factory()->create();
+    $entry = JournalEntry::factory()->public()->for($user)->create();
+
+    $this->actingAs($user)
+        ->post(route('journal-entries.publish', $entry))
+        ->assertRedirect(route('journal-entries.show', $entry));
+
+    Event::assertNotDispatched(JournalEntryPublished::class);
 });
 
 it('attaches tags correctly', function () {

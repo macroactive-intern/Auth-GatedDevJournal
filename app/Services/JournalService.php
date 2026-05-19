@@ -134,18 +134,23 @@ class JournalService
     public function publish(JournalEntry $entry): JournalEntry
     {
         return DB::transaction(function () use ($entry): JournalEntry {
-            $wasPublic = $entry->is_public;
+            $lockedEntry = JournalEntry::query()
+                ->whereKey($entry->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
 
-            $entry->forceFill([
-                'is_public' => true,
-                'published_at' => $entry->published_at ?? now(),
-            ])->save();
-
-            if (! $wasPublic) {
-                JournalEntryPublished::dispatch($entry);
+            if ($lockedEntry->is_public) {
+                return $lockedEntry->refresh();
             }
 
-            return $entry->refresh();
+            $lockedEntry->forceFill([
+                'is_public' => true,
+                'published_at' => $lockedEntry->published_at ?? now(),
+            ])->save();
+
+            JournalEntryPublished::dispatch($lockedEntry);
+
+            return $lockedEntry->refresh();
         });
     }
 

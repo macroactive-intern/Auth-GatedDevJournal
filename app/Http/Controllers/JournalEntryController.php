@@ -34,12 +34,12 @@ class JournalEntryController extends Controller
 
     public function store(StoreJournalEntryRequest $request): RedirectResponse
     {
-        $entry = $this->journalService->create(
+        $this->journalService->create(
             $request->user(),
             $request->validated()
         );
 
-        return redirect()->route('journal-entries.show', $entry);
+        return redirect()->route('dashboard');
     }
 
     public function show(JournalEntry $journalEntry): View
