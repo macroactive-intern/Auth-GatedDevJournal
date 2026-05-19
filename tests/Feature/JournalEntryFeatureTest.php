@@ -4,6 +4,7 @@ use App\Events\JournalEntryPublished;
 use App\Models\JournalEntry;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 
@@ -28,10 +29,16 @@ it('allows a user to create an entry', function () {
 it('returns 429 for the eleventh entry in a day', function () {
     $user = User::factory()->create();
 
-    JournalEntry::factory()
-        ->count(10)
-        ->for($user)
-        ->create(['created_at' => now('UTC')]);
+    Cache::flush();
+
+    foreach (range(1, 10) as $entryNumber) {
+        $this->actingAs($user)
+            ->post(route('journal-entries.store'), [
+                'title' => "Entry {$entryNumber}",
+                'body' => journalBody(),
+            ])
+            ->assertRedirect(route('dashboard'));
+    }
 
     $this->actingAs($user)
         ->post(route('journal-entries.store'), [

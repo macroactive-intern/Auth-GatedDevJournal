@@ -9,6 +9,7 @@ use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -190,13 +191,14 @@ class JournalService
         $now = CarbonImmutable::now('UTC');
         $startOfDay = $now->startOfDay();
         $resetAt = $startOfDay->addDay();
+        $key = sprintf('journal-entry-limit:%s:%s', $user->id, $startOfDay->toDateString());
+        $secondsUntilReset = max(1, $now->diffInSeconds($resetAt));
 
-        $entriesCreatedToday = $user->journalEntries()
-            ->where('created_at', '>=', $startOfDay)
-            ->where('created_at', '<', $resetAt)
-            ->count();
+        Cache::add($key, 0, $secondsUntilReset);
 
-        if ($entriesCreatedToday < self::DAILY_ENTRY_LIMIT) {
+        $entriesCreatedToday = Cache::increment($key);
+
+        if ($entriesCreatedToday <= self::DAILY_ENTRY_LIMIT) {
             return;
         }
 
@@ -207,7 +209,7 @@ class JournalService
                 $resetAt->toIso8601String()
             ),
             headers: [
-                'Retry-After' => (string) max(1, $now->diffInSeconds($resetAt)),
+                'Retry-After' => (string) $secondsUntilReset,
                 'X-RateLimit-Limit' => (string) self::DAILY_ENTRY_LIMIT,
                 'X-RateLimit-Reset' => $resetAt->toIso8601String(),
             ],
