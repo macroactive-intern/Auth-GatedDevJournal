@@ -40,14 +40,6 @@ class JournalEntryPolicy
     }
 
     /**
-     * Determine whether the user can edit the model.
-     */
-    public function edit(User $user, JournalEntry $journalEntry): bool
-    {
-        return $user->is($journalEntry->user);
-    }
-
-    /**
      * Determine whether the user can delete the model.
      */
     public function delete(User $user, JournalEntry $journalEntry): bool

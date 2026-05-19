@@ -82,7 +82,7 @@
                                         </p>
                                     </div>
 
-                                    @can('edit', $entry)
+                                    @can('update', $entry)
                                         <a href="{{ route('journal-entries.edit', $entry) }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
                                             {{ __('Edit') }}
                                         </a>
