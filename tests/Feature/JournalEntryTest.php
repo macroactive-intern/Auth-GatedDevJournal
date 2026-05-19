@@ -133,6 +133,8 @@ it('prevents other users from editing an entry', function () {
             'body' => journalEntryBody(),
         ])
         ->assertForbidden();
+
+    expect($entry->fresh()->title)->not->toBe('Not allowed');
 });
 
 it('allows an owner to delete their own entry', function () {
