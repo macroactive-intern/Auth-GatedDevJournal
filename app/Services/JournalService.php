@@ -40,7 +40,13 @@ class JournalService
             ->when($search, function ($query, string $search): void {
                 $query->where(function ($query) use ($search): void {
                     $query->where('title', 'like', "%{$search}%")
-                        ->orWhere('body', 'like', "%{$search}%");
+                        ->orWhere('body', 'like', "%{$search}%")
+                        ->orWhereHas('user', function ($query) use ($search): void {
+                            $query->where('name', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('tags', function ($query) use ($search): void {
+                            $query->where('name', 'like', "%{$search}%");
+                        });
                 });
             })
             ->latest('published_at')

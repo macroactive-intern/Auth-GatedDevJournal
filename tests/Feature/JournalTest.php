@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\JournalEntry;
+use App\Models\JournalEntryFeedback;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -38,6 +39,50 @@ it('only shows the logged in users entries on the journal page', function () {
         ->assertSee('My private journal note')
         ->assertSee('Edit')
         ->assertDontSee('Other user public note');
+});
+
+it('shows a feedback button for the users public entries on the journal page', function () {
+    $user = User::factory()->create();
+
+    $publicEntry = JournalEntry::factory()->public()->for($user)->create([
+        'title' => 'Public entry with feedback button',
+    ]);
+
+    JournalEntry::factory()->for($user)->create([
+        'title' => 'Private entry with publish button',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('journal.index'))
+        ->assertOk()
+        ->assertSee('Public entry with feedback button')
+        ->assertSee('View feedback')
+        ->assertSee(route('journal-entries.feedback.create', $publicEntry), false)
+        ->assertSee('Private entry with publish button')
+        ->assertSee('Publish');
+});
+
+it('lets entry owners view feedback on their public entries', function () {
+    $owner = User::factory()->create();
+    $commenter = User::factory()->create(['name' => 'Feedback Reader']);
+    $entry = JournalEntry::factory()->public()->for($owner)->create([
+        'title' => 'Owned public entry with feedback',
+    ]);
+
+    JournalEntryFeedback::query()->create([
+        'journal_entry_id' => $entry->id,
+        'user_id' => $commenter->id,
+        'body' => 'This feedback should be visible to the entry owner.',
+    ]);
+
+    $this->actingAs($owner)
+        ->get(route('journal-entries.feedback.create', $entry))
+        ->assertOk()
+        ->assertSee('Entry Feedback')
+        ->assertSee('This is your entry. Feedback from other users appears below.')
+        ->assertSee('Feedback Reader')
+        ->assertSee('This feedback should be visible to the entry owner.')
+        ->assertDontSee('Send feedback');
 });
 
 it('shows an edit form for the owners journal entry', function () {

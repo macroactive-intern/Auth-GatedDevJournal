@@ -13,7 +13,6 @@ class JournalEntryFeedbackController extends Controller
     public function create(Request $request, JournalEntry $journalEntry): View
     {
         abort_unless($journalEntry->is_public, 404);
-        abort_if($request->user()->is($journalEntry->user), 403);
 
         return view('journal.feedback.create', [
             'entry' => $journalEntry->load([

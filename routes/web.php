@@ -12,8 +12,11 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function (JournalService $journalService) {
+    $search = request()->string('search')->toString();
+
     return view('dashboard', [
-        'entries' => $journalService->listPublic(),
+        'entries' => $journalService->listPublic($search),
+        'search' => $search,
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 

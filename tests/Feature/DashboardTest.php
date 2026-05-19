@@ -2,6 +2,7 @@
 
 use App\Models\JournalEntry;
 use App\Models\JournalEntryFeedback;
+use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -94,6 +95,66 @@ it('shows feedback counts on public dashboard entries', function () {
         ->assertSee('(1)');
 });
 
+it('filters the dashboard public feed by author name', function () {
+    $viewer = User::factory()->create();
+    $matchingAuthor = User::factory()->create(['name' => 'Nate Searchable']);
+    $otherAuthor = User::factory()->create(['name' => 'Other Author']);
+
+    JournalEntry::factory()->public()->for($matchingAuthor)->create([
+        'title' => 'Entry from matching author',
+    ]);
+
+    JournalEntry::factory()->public()->for($otherAuthor)->create([
+        'title' => 'Entry from other author',
+    ]);
+
+    $this->actingAs($viewer)
+        ->get(route('dashboard', ['search' => 'Nate']))
+        ->assertOk()
+        ->assertSee('Entry from matching author')
+        ->assertSee('Nate Searchable')
+        ->assertDontSee('Entry from other author');
+});
+
+it('filters the dashboard public feed by tag name', function () {
+    $viewer = User::factory()->create();
+    $owner = User::factory()->create();
+    $matchingEntry = JournalEntry::factory()->public()->for($owner)->create([
+        'title' => 'Entry tagged with Laravel',
+    ]);
+    $otherEntry = JournalEntry::factory()->public()->for($owner)->create([
+        'title' => 'Entry tagged with CSS',
+    ]);
+    $laravelTag = Tag::query()->create(['name' => 'laravel']);
+    $cssTag = Tag::query()->create(['name' => 'css']);
+
+    $matchingEntry->tags()->attach($laravelTag);
+    $otherEntry->tags()->attach($cssTag);
+
+    $this->actingAs($viewer)
+        ->get(route('dashboard', ['search' => 'laravel']))
+        ->assertOk()
+        ->assertSee('Search public entries')
+        ->assertSee('Entry tagged with Laravel')
+        ->assertSee('#laravel')
+        ->assertDontSee('Entry tagged with CSS');
+});
+
+it('shows an empty dashboard search state when no public entries match', function () {
+    $viewer = User::factory()->create();
+    $owner = User::factory()->create();
+
+    JournalEntry::factory()->public()->for($owner)->create([
+        'title' => 'Visible but not matching',
+    ]);
+
+    $this->actingAs($viewer)
+        ->get(route('dashboard', ['search' => 'missing-tag']))
+        ->assertOk()
+        ->assertSee('No public entries match your search.')
+        ->assertDontSee('Visible but not matching');
+});
+
 it('stores feedback from another user on a public entry', function () {
     $owner = User::factory()->create();
     $commenter = User::factory()->create();
@@ -146,13 +207,9 @@ it('shows an empty feedback message when an entry has no feedback yet', function
         ->assertSee('No feedback has been added yet.');
 });
 
-it('prevents owners from leaving feedback on their own entries', function () {
+it('prevents owners from submitting feedback on their own entries', function () {
     $owner = User::factory()->create();
     $entry = JournalEntry::factory()->public()->for($owner)->create();
-
-    $this->actingAs($owner)
-        ->get(route('journal-entries.feedback.create', $entry))
-        ->assertForbidden();
 
     $this->actingAs($owner)
         ->post(route('journal-entries.feedback.store', $entry), [

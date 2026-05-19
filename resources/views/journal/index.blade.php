@@ -47,14 +47,18 @@
                                             {{ __('Edit') }}
                                         </a>
 
-                                        @unless ($entry->is_public)
+                                        @if ($entry->is_public)
+                                            <a href="{{ route('journal-entries.feedback.create', $entry) }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
+                                                {{ __('View feedback') }}
+                                            </a>
+                                        @else
                                             <form method="POST" action="{{ route('journal-entries.publish', $entry) }}">
                                                 @csrf
                                                 <button type="submit" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
                                                     {{ __('Publish') }}
                                                 </button>
                                             </form>
-                                        @endunless
+                                        @endif
                                     </div>
                                 </div>
 
