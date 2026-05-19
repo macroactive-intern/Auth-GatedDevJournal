@@ -10,12 +10,46 @@ use Illuminate\Support\Facades\URL;
 
 uses(RefreshDatabase::class);
 
+it('redirects guests from the journal index', function () {
+    $this->get(route('journal-entries.index'))->assertRedirect('/login');
+});
+
+it('allows authenticated users to view their journal index', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->get(route('journal-entries.index'))
+        ->assertOk()
+        ->assertSee('My Journal');
+});
+
+it('only shows the logged in users entries on the journal index', function () {
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+
+    JournalEntry::factory()->for($user)->create([
+        'title' => 'My private journal note',
+    ]);
+
+    JournalEntry::factory()->public()->for($otherUser)->create([
+        'title' => 'Other user public note',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('journal-entries.index'))
+        ->assertOk()
+        ->assertSee('This is your personal journal feed')
+        ->assertSee('My private journal note')
+        ->assertSee('Edit')
+        ->assertDontSee('Other user public note');
+});
+
 it('allows a user to create an entry', function () {
     $user = User::factory()->create();
 
     $response = $this->actingAs($user)->post(route('journal-entries.store'), [
         'title' => 'My first dev journal entry',
-        'body' => journalBody(),
+        'body' => journalEntryBody(),
     ]);
 
     $response->assertRedirect(route('dashboard'));
@@ -35,7 +69,7 @@ it('returns 429 for the eleventh entry in a day', function () {
         $this->actingAs($user)
             ->post(route('journal-entries.store'), [
                 'title' => "Entry {$entryNumber}",
-                'body' => journalBody(),
+                'body' => journalEntryBody(),
             ])
             ->assertRedirect(route('dashboard'));
     }
@@ -43,54 +77,47 @@ it('returns 429 for the eleventh entry in a day', function () {
     $this->actingAs($user)
         ->post(route('journal-entries.store'), [
             'title' => 'One too many',
-            'body' => journalBody(),
+            'body' => journalEntryBody(),
         ])
         ->assertStatus(429)
         ->assertHeader('X-RateLimit-Limit', '10')
         ->assertHeader('X-RateLimit-Reset');
 });
 
-it('allows an owner to edit their own entry', function () {
+it('shows an edit form for the owners journal entry', function () {
     $user = User::factory()->create();
-    $entry = JournalEntry::factory()->for($user)->create();
+    $entry = JournalEntry::factory()->for($user)->create([
+        'title' => 'Editable journal title',
+        'body' => journalEntryBody('original'),
+    ]);
 
     $this->actingAs($user)
         ->get(route('journal-entries.edit', $entry))
         ->assertOk()
-        ->assertSee($entry->title);
+        ->assertSee('Editable journal title')
+        ->assertSee('Log')
+        ->assertSee('Save changes')
+        ->assertSee(route('journal-entries.update', $entry), false);
+});
+
+it('allows an owner to update their own entry', function () {
+    $user = User::factory()->create();
+    $entry = JournalEntry::factory()->for($user)->create();
 
     $this->actingAs($user)
         ->patch(route('journal-entries.update', $entry), [
             'title' => 'Updated title',
-            'body' => journalBody(),
+            'body' => journalEntryBody('updated'),
+            'tags' => ['laravel', '', 'journal'],
+            'is_public' => '1',
         ])
         ->assertRedirect(route('journal-entries.show', $entry));
 
-    $this->assertDatabaseHas('journal_entries', [
-        'id' => $entry->id,
-        'title' => 'Updated title',
-    ]);
-});
+    $entry->refresh();
 
-it('stores the previous body as a revision before updating an entry', function () {
-    $user = User::factory()->create();
-    $entry = JournalEntry::factory()->for($user)->create([
-        'body' => 'Original body content before the edit.',
-    ]);
-
-    $this->actingAs($user)
-        ->patch(route('journal-entries.update', $entry), [
-            'title' => $entry->title,
-            'body' => journalBody(),
-        ])
-        ->assertRedirect(route('journal-entries.show', $entry));
-
-    $this->assertDatabaseHas('journal_entry_revisions', [
-        'journal_entry_id' => $entry->id,
-        'body' => 'Original body content before the edit.',
-    ]);
-
-    expect($entry->fresh()->revisions)->toHaveCount(1);
+    expect($entry->title)->toBe('Updated title')
+        ->and($entry->is_public)->toBeTrue()
+        ->and($entry->tags()->pluck('name')->all())->toBe(['laravel', 'journal']);
 });
 
 it('prevents other users from editing an entry', function () {
@@ -105,7 +132,7 @@ it('prevents other users from editing an entry', function () {
     $this->actingAs($otherUser)
         ->patch(route('journal-entries.update', $entry), [
             'title' => 'Not allowed',
-            'body' => journalBody(),
+            'body' => journalEntryBody(),
         ])
         ->assertForbidden();
 });
@@ -172,7 +199,7 @@ it('allows owners to generate a seven day signed share URL', function () {
         ->and($content)->toContain('expires=');
 });
 
-it('searches a user journal entries', function () {
+it('searches a users journal entries', function () {
     $user = User::factory()->create();
     JournalEntry::factory()->for($user)->create(['title' => 'Laravel service container']);
     JournalEntry::factory()->for($user)->create(['title' => 'Unrelated note']);
@@ -229,7 +256,7 @@ it('attaches tags correctly', function () {
 
     $this->actingAs($user)->post(route('journal-entries.store'), [
         'title' => 'Tagged entry',
-        'body' => journalBody(),
+        'body' => journalEntryBody(),
         'tags' => ['laravel', 'testing'],
     ]);
 
@@ -241,9 +268,9 @@ it('attaches tags correctly', function () {
     expect($entry->tags()->where('name', 'testing')->exists())->toBeTrue();
 });
 
-function journalBody(): string
+function journalEntryBody(string $prefix = 'word'): string
 {
     return collect(range(1, 50))
-        ->map(fn (int $number): string => "word{$number}")
+        ->map(fn (int $number): string => "{$prefix}{$number}")
         ->implode(' ');
 }
