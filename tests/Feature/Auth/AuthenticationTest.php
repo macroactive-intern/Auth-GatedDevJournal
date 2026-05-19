@@ -1,9 +1,7 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
-uses(RefreshDatabase::class);
 
 it('renders the login screen', function () {
     $this->get('/login')->assertOk();

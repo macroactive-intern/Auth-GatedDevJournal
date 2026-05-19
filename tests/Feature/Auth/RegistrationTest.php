@@ -1,8 +1,6 @@
 <?php
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
-uses(RefreshDatabase::class);
 
 it('renders the registration screen', function () {
     $this->get('/register')->assertOk();

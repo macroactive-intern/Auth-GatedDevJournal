@@ -1,9 +1,7 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
-uses(RefreshDatabase::class);
 
 it('renders the confirm password screen', function () {
     $user = User::factory()->create();

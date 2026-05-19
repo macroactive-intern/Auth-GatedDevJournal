@@ -4,9 +4,7 @@ use App\Models\JournalEntry;
 use App\Models\JournalEntryFeedback;
 use App\Models\Tag;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
-uses(RefreshDatabase::class);
 
 it('shows an add new entry button on the dashboard for logged in users', function () {
     $user = User::factory()->create();

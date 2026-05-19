@@ -3,9 +3,7 @@
 use App\Models\JournalEntry;
 use App\Models\Tag;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
-uses(RefreshDatabase::class);
 
 it('shows tags with entry counts on the tags page', function () {
     $tag = Tag::create(['name' => 'laravel']);

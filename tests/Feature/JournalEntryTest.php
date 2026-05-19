@@ -3,12 +3,10 @@
 use App\Events\JournalEntryPublished;
 use App\Models\JournalEntry;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 
-uses(RefreshDatabase::class);
 
 it('redirects guests from the journal index', function () {
     $this->get(route('journal-entries.index'))->assertRedirect('/login');
