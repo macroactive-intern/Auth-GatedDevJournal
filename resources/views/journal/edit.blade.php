@@ -50,7 +50,7 @@
                         </label>
 
                         <div class="flex items-center justify-between gap-3">
-                            <a href="{{ route('journal.index') }}" class="text-sm font-medium text-gray-600 hover:text-gray-900">
+                            <a href="{{ route('journal-entries.index') }}" class="text-sm font-medium text-gray-600 hover:text-gray-900">
                                 {{ __('Back to journal') }}
                             </a>
 

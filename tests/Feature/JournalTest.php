@@ -8,14 +8,14 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 it('redirects guests from the journal page', function () {
-    $this->get('/journal')->assertRedirect('/login');
+    $this->get(route('journal-entries.index'))->assertRedirect('/login');
 });
 
 it('allows authenticated users to view the journal page', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user)
-        ->get('/journal')
+        ->get(route('journal-entries.index'))
         ->assertOk()
         ->assertSee('My Journal');
 });
@@ -33,7 +33,7 @@ it('only shows the logged in users entries on the journal page', function () {
     ]);
 
     $this->actingAs($user)
-        ->get(route('journal.index'))
+        ->get(route('journal-entries.index'))
         ->assertOk()
         ->assertSee('This is your personal journal feed')
         ->assertSee('My private journal note')
@@ -53,7 +53,7 @@ it('shows a feedback button for the users public entries on the journal page', f
     ]);
 
     $this->actingAs($user)
-        ->get(route('journal.index'))
+        ->get(route('journal-entries.index'))
         ->assertOk()
         ->assertSee('Public entry with feedback button')
         ->assertSee('View feedback')

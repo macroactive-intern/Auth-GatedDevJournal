@@ -15,7 +15,7 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
-                    <x-nav-link :href="route('journal.index')" :active="request()->routeIs('journal.*')">
+                    <x-nav-link :href="route('journal-entries.index')" :active="request()->routeIs('journal-entries.index')">
                         {{ __('Journal') }}
                     </x-nav-link>
                     <x-nav-link :href="route('journal-entries.create')" :active="request()->routeIs('journal-entries.create')">
@@ -76,7 +76,7 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('journal.index')" :active="request()->routeIs('journal.*')">
+            <x-responsive-nav-link :href="route('journal-entries.index')" :active="request()->routeIs('journal-entries.index')">
                 {{ __('Journal') }}
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('journal-entries.create')" :active="request()->routeIs('journal-entries.create')">

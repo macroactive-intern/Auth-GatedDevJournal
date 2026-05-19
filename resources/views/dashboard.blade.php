@@ -33,7 +33,7 @@
                     <div class="flex items-center justify-between">
                         <h3 class="text-lg font-medium">{{ __('Public feed') }}</h3>
 
-                        <a href="{{ route('journal.index') }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
+                        <a href="{{ route('journal-entries.index') }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
                             {{ __('My journal') }}
                         </a>
                     </div>

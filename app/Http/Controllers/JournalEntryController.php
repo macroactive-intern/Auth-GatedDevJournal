@@ -19,9 +19,11 @@ class JournalEntryController extends Controller
     public function index(Request $request): View
     {
         $this->authorize('viewAny', JournalEntry::class);
+        $search = $request->string('search')->toString();
 
         return view('journal.index', [
-            'entries' => $this->journalService->listForUser($request->user(), $request->string('search')->toString()),
+            'entries' => $this->journalService->listForUser($request->user(), $search),
+            'search' => $search,
         ]);
     }
 

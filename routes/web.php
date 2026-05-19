@@ -30,12 +30,6 @@ Route::get('/tags', [TagController::class, 'index'])->name('tags.index');
 Route::get('/tags/{tag}', [TagController::class, 'show'])->name('tags.show');
 
 Route::middleware('auth')->group(function () {
-    Route::get('/journal', function (JournalService $journalService) {
-        return view('journal.index', [
-            'entries' => $journalService->listForUser(request()->user()),
-        ]);
-    })->name('journal.index');
-
     Route::resource('journal-entries', JournalEntryController::class)->except('show');
     Route::get('/journal-entries/{journal_entry}/share', [JournalEntryController::class, 'share'])
         ->name('journal-entries.share');

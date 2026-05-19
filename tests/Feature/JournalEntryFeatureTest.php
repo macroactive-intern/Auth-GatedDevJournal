@@ -180,8 +180,20 @@ it('searches a user journal entries', function () {
     $this->actingAs($user)
         ->get(route('journal-entries.index', ['search' => 'service']))
         ->assertOk()
+        ->assertSee('Search my journal')
         ->assertSee('Laravel service container')
         ->assertDontSee('Unrelated note');
+});
+
+it('shows an empty state when no user journal entries match search', function () {
+    $user = User::factory()->create();
+    JournalEntry::factory()->for($user)->create(['title' => 'Laravel service container']);
+
+    $this->actingAs($user)
+        ->get(route('journal-entries.index', ['search' => 'missing']))
+        ->assertOk()
+        ->assertSee('No journal entries match your search.')
+        ->assertDontSee('Laravel service container');
 });
 
 it('dispatches an event when publishing an entry', function () {

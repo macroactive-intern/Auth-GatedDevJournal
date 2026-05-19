@@ -24,6 +24,32 @@
                         </p>
                     </div>
 
+                    <form method="GET" action="{{ route('journal-entries.index') }}" class="mt-6 flex flex-col gap-3 sm:flex-row">
+                        <div class="flex-1">
+                            <x-input-label for="search" :value="__('Search my journal')" />
+                            <x-text-input
+                                id="search"
+                                name="search"
+                                type="search"
+                                class="mt-1 block w-full"
+                                :value="$search"
+                                placeholder="Search title or log"
+                            />
+                        </div>
+
+                        <div class="flex items-end gap-3">
+                            <x-primary-button>
+                                {{ __('Search') }}
+                            </x-primary-button>
+
+                            @if ($search)
+                                <a href="{{ route('journal-entries.index') }}" class="mb-2 text-sm font-medium text-gray-600 hover:text-gray-900">
+                                    {{ __('Clear') }}
+                                </a>
+                            @endif
+                        </div>
+                    </form>
+
                     <div class="mt-6 space-y-5">
                         @forelse ($entries as $entry)
                             <article class="border-b border-gray-100 pb-5 last:border-b-0 last:pb-0">
@@ -78,7 +104,9 @@
                             </article>
                         @empty
                             <div class="rounded-md border border-dashed border-gray-300 p-6 text-center">
-                                <p class="text-sm text-gray-600">{{ __('No journal entries found.') }}</p>
+                                <p class="text-sm text-gray-600">
+                                    {{ $search ? __('No journal entries match your search.') : __('No journal entries found.') }}
+                                </p>
                                 <a href="{{ route('journal-entries.create') }}" class="mt-3 inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
                                     {{ __('Write your first entry') }}
                                 </a>
