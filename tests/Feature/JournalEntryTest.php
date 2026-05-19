@@ -135,6 +135,19 @@ it('prevents other users from editing an entry', function () {
         ->assertForbidden();
 });
 
+it('allows an owner to delete their own entry', function () {
+    $user = User::factory()->create();
+    $entry = JournalEntry::factory()->for($user)->create();
+
+    $this->actingAs($user)
+        ->delete(route('journal-entries.destroy', $entry))
+        ->assertRedirect(route('journal-entries.index'));
+
+    $this->assertDatabaseMissing('journal_entries', [
+        'id' => $entry->id,
+    ]);
+});
+
 it('shows public entries publicly', function () {
     $entry = JournalEntry::factory()->public()->create([
         'title' => 'Public dev note',

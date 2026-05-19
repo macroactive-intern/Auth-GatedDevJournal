@@ -157,9 +157,7 @@ class JournalService
 
     public function delete(JournalEntry $entry): void
     {
-        DB::transaction(function () use ($entry): void {
-            $entry->delete();
-        });
+        $entry->delete();
     }
 
     public function attachTags(JournalEntry $entry, array $tagNames): JournalEntry
